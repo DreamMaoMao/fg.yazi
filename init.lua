@@ -16,7 +16,7 @@ local function fail(s, ...) ya.notify { title = "Fzf", content = string.format(s
 local function entry(_, args)
 	local _permit = ya.hide()
 	local cwd = state()
-	local shell_value = os.getenv("SHELL"):match(".*/(.*)")
+	local shell_value = ya.target_family() == "windows" and "nu" or os.getenv("SHELL"):match(".*/(.*)")
 	local cmd_args = ""
 
 	local preview_cmd = [===[line={2} && begin=$( if [[ $line -lt 7 ]]; then echo $((line-1)); else echo 6; fi ) && bat --highlight-line={2} --color=always --line-range $((line-begin)):$((line+10)) {1}]===]
@@ -25,8 +25,11 @@ local function entry(_, args)
 	elseif shell_value == "nu" then
 		preview_cmd = [[let line = ({2} | into int); let begin = if $line < 7 { $line - 1 } else { 6 }; bat --highlight-line={2} --color=always --line-range $'($line - $begin):($line + 10)' {1}]]
 	end
-
-	if args[1] == "fzf" then
+  if ya.target_family() == "windows" and args[1] == "fzf" then
+		cmd_args = [[fzf]]
+  elseif ya.target_family() == "windows" then
+		cmd_args = [[rg --color=always --line-number --no-heading --smart-case '' | fzf --ansi ]]
+  elseif args[1] == "fzf" then
 		cmd_args = [[fzf --preview='bat --color=always {1}']]
 	elseif args[1] == "rg" and shell_value == "fish" then
 		cmd_args = [[
