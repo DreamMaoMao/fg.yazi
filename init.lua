@@ -20,17 +20,26 @@ local function entry(_, args)
 	local cmd_args = ""
 
 	local preview_cmd = [===[line={2} && begin=$( if [[ $line -lt 7 ]]; then echo $((line-1)); else echo 6; fi ) && bat --highlight-line={2} --color=always --line-range $((line-begin)):$((line+10)) {1}]===]
-	if shell_value == "fish" then
+	if ya.target_family() == "windows" then
+		preview_cmd = [[bat --color=always --line-range {2}: {1}]]
+	elseif shell_value == "fish" then
 		preview_cmd = [[set line {2} && set begin ( test $line -lt 7  &&  echo (math "$line-1") || echo  6 ) && bat --highlight-line={2} --color=always --line-range (math "$line-$begin"):(math "$line+10") {1}]]
 	elseif shell_value == "nu" then
 		preview_cmd = [[let line = ({2} | into int); let begin = if $line < 7 { $line - 1 } else { 6 }; bat --highlight-line={2} --color=always --line-range $'($line - $begin):($line + 10)' {1}]]
 	end
-  if ya.target_family() == "windows" and args[1] == "fzf" then
-		cmd_args = [[fzf]]
-  elseif ya.target_family() == "windows" then
-		cmd_args = [[rg --color=always --line-number --no-heading --smart-case '' | fzf --ansi ]]
-  elseif args[1] == "fzf" then
-		cmd_args = [[fzf --preview='bat --color=always {1}']]
+  	if ya.target_family() == "windows" and args[1] == "fzf" then
+		cmd_args = [[fzf --preview="bat --color=always {}"]]
+	elseif ya.target_family() == "windows" and args[1] == "rg" then
+		local rg_prefix = [[rg --colors "path:fg:blue" --colors "line:fg:red" --colors "column:fg:yellow" --column --line-number --no-heading --color=always --smart-case ]]
+		cmd_args = [[fzf --ansi --disabled --bind "start:reload:]]
+			.. rg_prefix
+			.. [[{q}" --bind "change:reload:]]
+			.. rg_prefix
+			.. [[{q}" --delimiter ":" --preview "]]
+			.. preview_cmd
+			.. [[" --preview-window "up,60%" --nth "3.."]]
+  	elseif ya.target_family() == "windows" then
+		cmd_args = [[rg --color=always --line-number --no-heading --smart-case "" | fzf --ansi --preview="]] .. preview_cmd .. [[" --delimiter=":" --preview-window="up:60%" --nth="3.."]]
 	elseif args[1] == "rg" and shell_value == "fish" then
 		cmd_args = [[
 			RG_PREFIX="rg --colors 'path:fg:blue' --colors 'line:fg:red' --colors 'column:fg:yellow' --column --line-number --no-heading --color=always --smart-case " \

@@ -14,12 +14,18 @@ A Yazi plugin for searching file content or filenames using `ripgrep` with `fzf`
 - fzf
 - ripgrep
 - bat
+- nullshell(only windows need)
 
 ## Install
 
 ```bash
 git clone https://github.com/DreamMaoMao/fg.yazi.git ~/.config/yazi/plugins/fg.yazi
 ```
+
+```powershell
+git clone https://gitee.com/DreamMaoMao/fg.yazi.git $env:APPDATA\yazi\config\plugins\fg.yazi
+```
+
 
 ## Usage
 
