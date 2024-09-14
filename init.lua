@@ -21,7 +21,7 @@ local function entry(_, args)
 
 	local preview_cmd = [===[line={2} && begin=$( if [[ $line -lt 7 ]]; then echo $((line-1)); else echo 6; fi ) && bat --highlight-line={2} --color=always --line-range $((line-begin)):$((line+10)) {1}]===]
 	if ya.target_family() == "windows" then
-		preview_cmd = [[bat --color=always --line-range {2}: {1}]]
+		preview_cmd = [[bat --highlight-line={2} --color=always --line-range {2}: {1}]]
 	elseif shell_value == "fish" then
 		preview_cmd = [[set line {2} && set begin ( test $line -lt 7  &&  echo (math "$line-1") || echo  6 ) && bat --highlight-line={2} --color=always --line-range (math "$line-$begin"):(math "$line+10") {1}]]
 	elseif shell_value == "nu" then
