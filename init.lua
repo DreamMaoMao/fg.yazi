@@ -40,6 +40,8 @@ local function entry(_, args)
 			.. [[" --preview-window "up,60%" --nth "3.."]]
   	elseif ya.target_family() == "windows" then
 		cmd_args = [[rg --color=always --line-number --no-heading --smart-case "" | fzf --ansi --preview="]] .. preview_cmd .. [[" --delimiter=":" --preview-window="up:60%" --nth="3.."]]
+	elseif args[1] == "fzf" then
+		cmd_args = [[fzf --preview="bat --color=always {}"]]
 	elseif args[1] == "rg" and shell_value == "fish" then
 		cmd_args = [[
 			RG_PREFIX="rg --colors 'path:fg:blue' --colors 'line:fg:red' --colors 'column:fg:yellow' --column --line-number --no-heading --color=always --smart-case " \
