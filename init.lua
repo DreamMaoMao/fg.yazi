@@ -13,7 +13,8 @@ local state = ya.sync(function() return tostring(cx.active.current.cwd) end)
 
 local function fail(s, ...) ya.notify { title = "Fzf", content = string.format(s, ...), timeout = 5, level = "error" } end
 
-local function entry(_, args)
+local function entry(_, job)
+	local args = job.args
 	local _permit = ya.hide()
 	local cwd = state()
 	local shell_value = ya.target_family() == "windows" and "nu" or os.getenv("SHELL"):match(".*/(.*)")
