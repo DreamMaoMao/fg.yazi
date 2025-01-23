@@ -1,8 +1,10 @@
 # fg.yazi
 
-https://github.com/DreamMaoMao/fg.yazi/assets/30348075/4b34ff25-800f-4250-b109-172f12a8b0ce
 
-A Yazi plugin for searching file content or filenames using `ripgrep` with `fzf` preview
+https://github.com/user-attachments/assets/05101a7c-33af-4899-8763-0af905266098
+
+A Yazi plugin for searching file content or filenames using `ripgrep` with `fzf` preview.
+Supports opening a specified line of search results through nvim or locating files in yazi.
 
 > [!NOTE]
 > The latest main branch of Yazi is required at the moment.
@@ -28,6 +30,16 @@ git clone https://gitee.com/DreamMaoMao/fg.yazi.git $env:APPDATA\yazi\config\plu
 
 
 ## Usage
+
+### Options
+- nvim: open selected file in nvim and jump to the match line
+- jump: reach file in yazi
+- menu: open option menu to select the action(default)
+```
+require("fg"):setup({
+    default_action = "menu", -- nvim, jump
+})
+```
 
 This option uses `ripgrep` to output all the lines of all files, and then uses `fzf` to fuzzy matching.
 

@@ -1,19 +1,114 @@
-local function splitAndGetFirst(inputstr, sep)
+local toggle_ui = ya.sync(function(self)
+	if self.children then
+		Modal:children_remove(self.children)
+		self.children = nil
+	else
+		self.children = Modal:children_add(self, 10)
+	end
+	ya.render()
+end)
+
+local init_ui_data = ya.sync(function(self,file_url)
+	self.opt = {"nvim", "jump"}
+	self.title = "fg"
+	self.title_color = "#82ab3a"
+	self.cursor = 0
+	self.file_url = file_url and file_url or ""
+	ya.render()
+end)
+
+local set_option = ya.sync(function(self,enable)
+	if enable then
+		self.active_opt = self.opt[self.cursor+1]
+	else
+		self.active_opt = nil
+	end
+end)
+
+local get_option = ya.sync(function(self)
+	return self.active_opt
+end)
+
+local get_default_action = ya.sync(function(self)
+	return self.default_action
+end)
+
+local update_cursor = ya.sync(function(self, cursor)
+	self.cursor = ya.clamp(0, self.cursor + cursor,  1)
+	ya.render()
+end)
+
+local M = {
+	keys = {
+		{ on = "q", run = "quit" },
+		{ on = "<Esc>", run = "quit" },
+		{ on = "<Enter>", run = "select" },
+
+
+		{ on = "k", run = "up" },
+		{ on = "j", run = "down" },
+
+
+		{ on = "<Up>", run = "up" },
+		{ on = "<Down>", run = "down" },
+
+	},
+}
+
+function M:new(area)
+	self:layout(area)
+	return self
+end
+
+function M:layout(area)
+	local chunks = ui.Layout()
+		:constraints({
+			ui.Constraint.Percentage(10),
+			ui.Constraint.Percentage(80),
+			ui.Constraint.Percentage(10),
+		})
+		:split(area)
+
+	local chunks = ui.Layout()
+		:direction(ui.Layout.HORIZONTAL)
+		:constraints({
+			ui.Constraint.Percentage(10),
+			ui.Constraint.Percentage(80),
+			ui.Constraint.Percentage(10),
+		})
+		:split(chunks[2])
+
+	self._area = chunks[2]
+end
+
+local function splitAndGetNth(inputstr, sep, index)
     if sep == nil then
         sep = "%s"
     end
-    local sepStart, sepEnd = string.find(inputstr, sep)
-    if sepStart then
-        return string.sub(inputstr, 1, sepStart - 1)
+    local count = 0
+    local start = 1
+    while true do
+        local sepStart, sepEnd = string.find(inputstr, sep, start)
+        if not sepStart then
+            break
+        end
+        count = count + 1
+        if count == index then
+            return string.sub(inputstr, start, sepStart - 1)
+        end
+        start = sepEnd + 1
     end
-    return inputstr
+    if index == 1 then
+        return inputstr
+    end
+    return nil -- 如果没有足够的分割部分，返回nil
 end
 
 local state = ya.sync(function() return tostring(cx.active.current.cwd) end)
 
 local function fail(s, ...) ya.notify { title = "Fzf", content = string.format(s, ...), timeout = 5, level = "error" } end
 
-local function entry(_, job)
+function M:entry(job)
 	local args = job.args
 	local _permit = ya.hide()
 	local cwd = state()
@@ -92,13 +187,88 @@ local function entry(_, job)
 		return fail("`fzf` exited with error code %s", output.status.code)
 	end
 
+	if output.stdout == "" then
+		return
+	end
+
 	local target = output.stdout:gsub("\n$", "")
 
-    local file_url = splitAndGetFirst(target,":")
+    local file_url = splitAndGetNth(target,":",1)
+	local line_number = splitAndGetNth(target,":",2)
+	line_number = line_number and line_number or 1
+	init_ui_data(cwd.."/"..file_url)
+	local default_action = get_default_action()
 
-	if file_url ~= "" then
-		ya.manager_emit(file_url:match("[/\\]$") and "cd" or "reveal", { file_url })
+	if default_action == "menu" or default_action == nil then
+		_permit:drop()
+		toggle_ui()
+		while true do
+			local cand = self.keys[ya.which { cands = self.keys, silent = true }]
+			if cand then
+				if cand.run == "quit" then
+					set_option(false)
+					toggle_ui()
+					break
+				elseif cand.run == "select" then
+					set_option(true)
+					toggle_ui()
+					break
+				elseif cand.run == "down" then
+					update_cursor(1)
+				elseif cand.run == "up" then
+					update_cursor(-1)
+				end
+			end
+		end
+		_permit = ya.hide()
 	end
+
+	if default_action == "nvim" or get_option() == "nvim" then
+		os.execute("nvim +"..line_number.." -n "..file_url.." 2> /dev/null")
+	elseif (default_action == "jump" or get_option() == "jump") and file_url ~= ""  then
+		ya.manager_emit(file_url:match("[/\\]$") and "cd" or "reveal", { file_url })
+	else
+		return
+	end
+
 end
 
-return { entry = entry }
+function M:reflow() return { self } end
+
+function M:redraw()
+	local rows = {}
+
+	rows[1] = ui.Row { "open with nvim" }
+	rows[2] = ui.Row { "reach at yazi" }
+	return {
+		ui.Clear(self._area),
+		ui.Border(ui.Border.ALL)
+			:area(self._area)
+			:type(ui.Border.ROUNDED)
+			:style(ui.Style():fg("#82ab3a"))
+			:title(ui.Line(self.title):align(ui.Line.CENTER):fg(self.title_color)),
+		ui.Table(rows)
+			:area(self._area:pad(ui.Pad(1, 2, 1, 2)))
+			:header(ui.Row({ "Action for:"..self.file_url }):style(ui.Style():bold():fg("#e73c80")))
+			:row(self.cursor)
+			:row_style(ui.Style():fg("#82ab3a"):underline()),
+	}
+end
+
+
+function M.fail(s, ...) 
+	ya.manager_emit("plugin", {"mount", args = "refresh" })
+	ya.notify { title = "fg", content = string.format(s, ...), timeout = 10, level = "error" } 
+end
+
+function M:click() end
+
+function M:scroll() end
+
+function M:touch() end
+
+function M:setup(config)
+	self.default_action = (config and config.default_action) and config.default_action or "menu"
+end
+
+return M
