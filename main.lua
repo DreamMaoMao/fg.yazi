@@ -199,7 +199,7 @@ function M:entry(job)
 	init_ui_data(cwd.."/"..file_url)
 	local default_action = get_default_action()
 
-	if default_action == "menu" or default_action == nil then
+	if (default_action == "menu" or default_action == nil) and args[1] ~= "fzf" then
 		_permit:drop()
 		toggle_ui()
 		while true do
@@ -223,9 +223,9 @@ function M:entry(job)
 		_permit = ya.hide()
 	end
 
-	if default_action == "nvim" or get_option() == "nvim" then
+	if (default_action == "nvim" or get_option() == "nvim" ) and args[1] ~= "fzf" then
 		os.execute("nvim +"..line_number.." -n "..file_url)
-	elseif (default_action == "jump" or get_option() == "jump") and file_url ~= ""  then
+	elseif (default_action == "jump" or get_option() == "jump" or args[1] == "fzf") and file_url ~= ""  then
 		ya.manager_emit(file_url:match("[/\\]$") and "cd" or "reveal", { file_url })
 	else
 		return
@@ -256,9 +256,9 @@ function M:redraw()
 end
 
 
-function M.fail(s, ...) 
+function M.fail(s, ...)
 	ya.manager_emit("plugin", {"mount", args = "refresh" })
-	ya.notify { title = "fg", content = string.format(s, ...), timeout = 10, level = "error" } 
+	ya.notify { title = "fg", content = string.format(s, ...), timeout = 10, level = "error" }
 end
 
 function M:click() end
