@@ -34,7 +34,9 @@ local get_default_action = ya.sync(function(self)
 end)
 
 local update_cursor = ya.sync(function(self, cursor)
-	self.cursor = ya.clamp(0, self.cursor + cursor,  1)
+	-- if add opt, need to add change 3th arg.
+	-- forexample, 2 mean 3 opt. circle 0 to 2.
+	self.cursor = ya.clamp(0, self.cursor + cursor,  2)
 	ya.render()
 end)
 
