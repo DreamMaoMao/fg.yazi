@@ -230,7 +230,7 @@ function M:entry(job)
 	elseif (default_action == "helix" or get_option() == "helix" ) and args[1] ~= "fzf" then
 		os.execute("hx +"..line_number.." "..file_url)
 	elseif (default_action == "jump" or get_option() == "jump" or args[1] == "fzf") and file_url ~= ""  then
-		ya.manager_emit(file_url:match("[/\\]$") and "cd" or "reveal", { file_url })
+		ya.mgr_emit(file_url:match("[/\\]$") and "cd" or "reveal", { file_url })
 	else
 		return
 	end
@@ -262,7 +262,7 @@ end
 
 
 function M.fail(s, ...)
-	ya.manager_emit("plugin", {"mount", args = "refresh" })
+	ya.mgr_emit("plugin", {"mount", "refresh" })
 	ya.notify { title = "fg", content = string.format(s, ...), timeout = 10, level = "error" }
 end
 
