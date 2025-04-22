@@ -55,13 +55,13 @@ The following option passes the input to `ripgrep` for a match search, reusing t
 ```toml
 [[manager.prepend_keymap]]
 on   = [ "f","G" ]
-run  = "plugin fg --args='rg'"
+run  = "plugin fg -- rg"
 desc = "find file by content (ripgrep match)"
 ```
 
 ```toml
 [[manager.prepend_keymap]]
 on   = [ "f","f" ]
-run  = "plugin fg --args='fzf'"
+run  = "plugin fg -- fzf"
 desc = "find file by filename"
 ```
