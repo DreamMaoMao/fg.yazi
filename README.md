@@ -1,5 +1,7 @@
 # fg.yazi
+This warehouse is no longer maintained separately.
 
+refer plugin update:https://github.com/DreamMaoMao/yazi-config
 
 https://github.com/user-attachments/assets/05101a7c-33af-4899-8763-0af905266098
 
